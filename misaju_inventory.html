@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="미사주 재고">
+<title>미사주 재고 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF8F5;
+  --surface: #FFFFFF;
+  --surface2: #F3F0EB;
+  --border: #E8E4DC;
+  --border2: #D4CFC5;
+  --text: #1A1714;
+  --text2: #6B665E;
+  --text3: #9C978F;
+  --accent: #8B4513;
+  --accent-light: #F5EDE6;
+  --accent-text: #6B3410;
+  --white-color: #2563A8;
+  --white-bg: #EEF4FB;
+  --red-color: #B91C1C;
+  --red-bg: #FEF2F2;
+  --success: #166534;
+  --success-bg: #F0FDF4;
+  --warn: #B45309;
+  --warn-bg: #FFFBEB;
+  --danger: #DC2626;
+  --danger-bg: #FEF2F2;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { font-size: 16px; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+}
+.header-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.header-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.15s;
+}
+.refresh-btn:active { background: var(--surface2); }
+
+/* Nav */
+.nav {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: var(--text3);
+  font-size: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  gap: 3px;
+  transition: color 0.15s;
+}
+.nav-item .nav-icon { font-size: 20px; }
+.nav-item.active { color: var(--accent); }
+.nav-item:active { background: var(--surface2); }
+
+/* Main content */
+.main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem 1rem calc(80px + env(safe-area-inset-bottom));
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Dashboard stat cards */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+.stat-icon { font-size: 20px; margin-bottom: 4px; }
+.stat-value { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.stat-unit { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.stat-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-ok { background: var(--success-bg); color: var(--success); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+
+/* Type badges */
+.type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.type-white { background: var(--white-bg); color: var(--white-color); }
+.type-red { background: var(--red-bg); color: var(--red-color); }
+.dir-in { background: var(--success-bg); color: var(--success); }
+.dir-out { background: var(--warn-bg); color: var(--warn); }
+
+/* Recent log */
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.log-item:last-child { border-bottom: none; }
+.log-date { color: var(--text3); font-size: 12px; min-width: 70px; }
+.log-desc { flex: 1; color: var(--text2); }
+.log-amount { font-weight: 500; color: var(--text); }
+
+/* Forms */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  background: var(--surface);
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.form-input:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--text3); }
+select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B665E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+.qty-row { display: flex; align-items: center; gap: 8px; }
+.qty-input {
+  width: 72px;
+  padding: 10px 10px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  background: var(--surface);
+  text-align: center;
+  outline: none;
+  -webkit-appearance: none;
+}
+.qty-input:focus { border-color: var(--accent); }
+.qty-unit { font-size: 13px; color: var(--text2); }
+
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+.section-head {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Buttons */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+  text-align: center;
+}
+.btn:active { transform: scale(0.98); opacity: 0.85; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); margin-top: 8px; }
+.btn-sm {
+  display: inline-block;
+  width: auto;
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* History filter */
+.filter-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.filter-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom) + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--text);
+  color: var(--surface);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  white-space: nowrap;
+  z-index: 999;
+  pointer-events: none;
+  max-width: calc(100vw - 2rem);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--danger); }
+
+/* Empty / Loading */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text3);
+  font-size: 14px;
+}
+.loading-state {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text3);
+  font-size: 13px;
+}
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Settings */
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-item:last-child { border-bottom: none; }
+.settings-label { font-size: 14px; color: var(--text); }
+.settings-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.notion-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 13px;
+  text-decoration: none;
+  margin-top: 8px;
+}
+.api-key-notice {
+  background: var(--accent-light);
+  border: 1px solid #D4A574;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 13px;
+  color: var(--accent-text);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+.card, .stat-card { animation: fadeIn 0.2s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div>
+      <div class="header-title">🍷 미사주 재고 관리</div>
+      <div class="header-sub">4층 사무실 · 화이트 &amp; 레드</div>
+    </div>
+    <button class="refresh-btn" onclick="onRefresh()" title="새로고침">↻</button>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- 대시보드 -->
+  <div id="panel-dashboard" class="panel active">
+    <div class="stat-row">
+      <div class="stat-card" id="stat-white">
+        <div class="stat-label">화이트</div>
+        <div class="stat-icon">🤍</div>
+        <div class="stat-value" id="val-white">—</div>
+        <div class="stat-unit" id="unit-white"></div>
+        <div><span class="stat-badge" id="badge-white">로딩중</span></div>
+      </div>
+      <div class="stat-card" id="stat-red">
+        <div class="stat-label">레드</div>
+        <div class="stat-icon">🍷</div>
+        <div class="stat-value" id="val-red">—</div>
+        <div class="stat-unit" id="unit-red"></div>
+        <div><span class="stat-badge" id="badge-red">로딩중</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">최근 입출고</div>
+      <div id="recent-list"><div class="loading-state"><span class="spinner"></span>불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <!-- 입고 -->
+  <div id="panel-inbound" class="panel">
+    <div class="card">
+      <div class="card-title">입고 기록 (구매)</div>
+
+      <div class="form-group">
+        <label class="form-label">일자</label>
+        <input type="date" id="in-date" class="form-input">
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-head">🤍 화이트</div>
+      <div class="form-group">
+        <label class="form-label">구매 수량</label>
+        <div class="qty-row">
+          <input type="number" id="in-white-box" class="qty-input" min="0" placeholder="0">
+          <span class="qty-unit">박스</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-head">🍷 레드</div>
+      <div class="form-group">
+        <label class="form-label">구매 수량</label>
+        <div class="qty-row">
+          <input type="number" id="in-red-box" class="qty-input" min="0" placeholder="0">
+          <span class="qty-unit">박스</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="form-group">
+        <label class="form-label">비고</label>
+        <input type="text" id="in-note" class="form-input" placeholder="교구청 구매 등">
+      </div>
+
+      <button class="btn btn-primary" onclick="submitInbound()">입고 저장</button>
+      <button class="btn btn-secondary" onclick="clearInbound()">초기화</button>
+    </div>
+  </div>
+
+  <!-- 출고 -->
+  <div id="panel-outbound" class="panel">
+    <div class="card">
+      <div class="card-title">출고 기록 (불출)</div>
+
+      <div class="form-group">
+        <label class="form-label">일자</label>
+        <input type="date" id="out-date" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">종류</label>
+        <select id="out-type" class="form-input">
+          <option value="화이트">🤍 화이트</option>
+          <option value="레드">🍷 레드</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">출고 수량</label>
+        <div class="qty-row">
+          <input type="number" id="out-box" class="qty-input" min="0" value="0">
+          <span class="qty-unit">박스</span>
+          <input type="number" id="out-bottle" class="qty-input" min="0" value="0">
+          <span class="qty-unit">병</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">출고자</label>
+        <input type="text" id="out-person" class="form-input" placeholder="사무장">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">수령자 및 비고</label>
+        <input type="text" id="out-receiver" class="form-input" placeholder="신부님, 제대회 등">
+      </div>
+
+      <button class="btn btn-primary" onclick="submitOutbound()">출고 저장</button>
+      <button class="btn btn-secondary" onclick="clearOutbound()">초기화</button>
+    </div>
+  </div>
+
+  <!-- 내역 -->
+  <div id="panel-history" class="panel">
+    <div class="filter-row">
+      <button class="filter-btn active" id="fb-all" onclick="filterHistory('all')">전체</button>
+      <button class="filter-btn" id="fb-in" onclick="filterHistory('in')">입고</button>
+      <button class="filter-btn" id="fb-out" onclick="filterHistory('out')">출고</button>
+      <button class="filter-btn" id="fb-white" onclick="filterHistory('white')">화이트</button>
+      <button class="filter-btn" id="fb-red" onclick="filterHistory('red')">레드</button>
+    </div>
+    <div id="history-list"><div class="loading-state"><span class="spinner"></span>불러오는 중...</div></div>
+  </div>
+
+  <!-- 설정 -->
+  <div id="panel-settings" class="panel">
+    <div class="api-key-notice">
+      ⚠️ 이 앱은 Notion API를 통해 데이터를 저장합니다.<br>
+      아래에 Notion API 키와 데이터베이스 ID를 입력한 후 저장해 주세요.
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notion API 연결</div>
+      <div class="form-group">
+        <label class="form-label">Notion API 키 (Internal Integration Token)</label>
+        <input type="password" id="cfg-api-key" class="form-input" placeholder="secret_xxxxxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">입고 DB ID</label>
+        <input type="text" id="cfg-in-db" class="form-input" placeholder="32자리 ID">
+      </div>
+      <div class="form-group">
+        <label class="form-label">출고 DB ID</label>
+        <input type="text" id="cfg-out-db" class="form-input" placeholder="32자리 ID">
+      </div>
+      <div class="form-group">
+        <label class="form-label">초기재고 DB ID</label>
+        <input type="text" id="cfg-init-db" class="form-input" placeholder="32자리 ID">
+      </div>
+      <button class="btn btn-primary" onclick="saveConfig()">연결 설정 저장</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">초기 재고 설정</div>
+      <div class="section-head">🤍 화이트</div>
+      <div class="form-group">
+        <div class="qty-row">
+          <input type="number" id="set-white-box" class="qty-input" min="0" placeholder="0">
+          <span class="qty-unit">박스</span>
+          <input type="number" id="set-white-bottle" class="qty-input" min="0" placeholder="0">
+          <span class="qty-unit">병</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-head">🍷 레드</div>
+      <div class="form-group">
+        <div class="qty-row">
+          <input type="number" id="set-red-box" class="qty-input" min="0" placeholder="0">
+          <span class="qty-unit">박스</span>
+          <input type="number" id="set-red-bottle" class="qty-input" min="0" placeholder="0">
+          <span class="qty-unit">병</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveInitStock()">초기 재고 저장</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notion 바로가기</div>
+      <a href="https://www.notion.so/3636439442e181afa742f2058ac6adb0" target="_blank" class="notion-link">
+        📋 미사주 재고 관리 Notion 페이지 열기 →
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<!-- Bottom Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')">
+      <span class="nav-icon">📊</span>대시보드
+    </button>
+    <button class="nav-item" id="nav-inbound" onclick="showTab('inbound')">
+      <span class="nav-icon">📥</span>입고
+    </button>
+    <button class="nav-item" id="nav-outbound" onclick="showTab('outbound')">
+      <span class="nav-icon">📤</span>출고
+    </button>
+    <button class="nav-item" id="nav-history" onclick="showTab('history')">
+      <span class="nav-icon">📋</span>내역
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="showTab('settings')">
+      <span class="nav-icon">⚙️</span>설정
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 설정 저장소 ──────────────────────────────────────────────
+const CFG_KEY = 'misaju_config';
+let cfg = {};
+
+function loadConfig() {
+  try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { cfg = {}; }
+  if (document.getElementById('cfg-api-key')) {
+    document.getElementById('cfg-api-key').value = cfg.apiKey || '';
+    document.getElementById('cfg-in-db').value = cfg.inDb || '5b09412b6e914008bdbd24414b967101';
+    document.getElementById('cfg-out-db').value = cfg.outDb || '7fda617ff79942b98a74a50e85aaa566';
+    document.getElementById('cfg-init-db').value = cfg.initDb || 'a3c24f5eb9af4c5b97761d5b8bacf013';
+  }
+}
+
+function saveConfig() {
+  cfg.apiKey = document.getElementById('cfg-api-key').value.trim();
+  cfg.inDb   = document.getElementById('cfg-in-db').value.trim();
+  cfg.outDb  = document.getElementById('cfg-out-db').value.trim();
+  cfg.initDb = document.getElementById('cfg-init-db').value.trim();
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  toast('연결 설정이 저장되었습니다.');
+}
+
+// ── Notion API 호출 ──────────────────────────────────────────
+const PROXY = 'https://api.anthropic.com/v1/messages';
+
+async function notionQuery(dbId, filter) {
+  const body = { page_size: 100 };
+  if (filter) body.filter = filter;
+  const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + cfg.apiKey,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('Notion API 오류: ' + res.status);
+  return res.json();
+}
+
+async function notionCreate(dbId, props) {
+  const res = await fetch('https://api.notion.com/v1/pages', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + cfg.apiKey,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      parent: { database_id: dbId },
+      properties: props
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || 'Notion 저장 실패');
+  }
+  return res.json();
+}
+
+async function notionUpdate(pageId, props) {
+  const res = await fetch('https://api.notion.com/v1/pages/' + pageId, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer ' + cfg.apiKey,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ properties: props })
+  });
+  if (!res.ok) throw new Error('Notion 수정 실패');
+  return res.json();
+}
+
+// ── 유틸 ─────────────────────────────────────────────────────
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function toDisplay(total) {
+  total = Math.max(0, total);
+  const b = Math.floor(total / 6), p = total % 6;
+  if (b === 0) return [p + '', '병'];
+  if (p === 0) return [b + '', '박스'];
+  return [b + '박스', p + '병'];
+}
+function getProp(page, key, type) {
+  const p = page.properties?.[key];
+  if (!p) return null;
+  if (type === 'title') return p.title?.[0]?.plain_text || '';
+  if (type === 'number') return p.number || 0;
+  if (type === 'select') return p.select?.name || '';
+  if (type === 'rich_text') return p.rich_text?.[0]?.plain_text || '';
+  if (type === 'date') return p.date?.start || '';
+  if (type === 'formula') return p.formula?.number || 0;
+  return null;
+}
+
+let toastTimer;
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 2800);
+}
+
+function checkConfig() {
+  if (!cfg.apiKey) {
+    toast('⚙️ 설정 탭에서 Notion API 키를 먼저 입력해주세요.', true);
+    showTab('settings');
+    return false;
+  }
+  return true;
+}
+
+// ── 탭 전환 ──────────────────────────────────────────────────
+let currentTab = 'dashboard';
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  currentTab = name;
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'history') loadHistory();
+  if (name === 'settings') loadConfig();
+}
+
+function onRefresh() {
+  if (currentTab === 'dashboard') loadDashboard();
+  if (currentTab === 'history') loadHistory();
+}
+
+// ── 대시보드 ─────────────────────────────────────────────────
+async function loadDashboard() {
+  if (!checkConfig()) return;
+  setStatLoading();
+  document.getElementById('recent-list').innerHTML = '<div class="loading-state"><span class="spinner"></span>불러오는 중...</div>';
+
+  try {
+    const [initData, inData, outData] = await Promise.all([
+      notionQuery(cfg.initDb || 'a3c24f5eb9af4c5b97761d5b8bacf013'),
+      notionQuery(cfg.inDb  || '5b09412b6e914008bdbd24414b967101'),
+      notionQuery(cfg.outDb || '7fda617ff79942b98a74a50e85aaa566')
+    ]);
+
+    // 초기재고
+    let wInit = 0, rInit = 0;
+    for (const p of initData.results || []) {
+      const type = getProp(p, '종류', 'title');
+      const box  = getProp(p, '박스', 'number') || 0;
+      const bot  = getProp(p, '병', 'number') || 0;
+      if (type === '화이트') wInit = box * 6 + bot;
+      if (type === '레드')   rInit = box * 6 + bot;
+    }
+
+    // 입고 합계
+    let wIn = 0, rIn = 0;
+    for (const p of inData.results || []) {
+      const type = getProp(p, '종류', 'select');
+      const box  = getProp(p, '구매박스', 'number') || 0;
+      if (type === '화이트') wIn += box * 6;
+      if (type === '레드')   rIn += box * 6;
+    }
+
+    // 출고 합계
+    let wOut = 0, rOut = 0;
+    for (const p of outData.results || []) {
+      const type = getProp(p, '종류', 'select');
+      const box  = getProp(p, '출고박스', 'number') || 0;
+      const bot  = getProp(p, '출고낱병', 'number') || 0;
+      if (type === '화이트') wOut += box * 6 + bot;
+      if (type === '레드')   rOut += box * 6 + bot;
+    }
+
+    const wTotal = wInit + wIn - wOut;
+    const rTotal = rInit + rIn - rOut;
+
+    renderStat('white', wTotal);
+    renderStat('red', rTotal);
+
+    // 최근 10건
+    const allLogs = [];
+    for (const p of inData.results || []) {
+      allLogs.push({
+        date: getProp(p, '일자', 'date') || '',
+        type: getProp(p, '종류', 'select'),
+        direction: '입고',
+        amount: (getProp(p, '구매박스', 'number') || 0) + '박스',
+        note: getProp(p, '비고', 'rich_text') || ''
+      });
+    }
+    for (const p of outData.results || []) {
+      const box = getProp(p, '출고박스', 'number') || 0;
+      const bot = getProp(p, '출고낱병', 'number') || 0;
+      const amt = box > 0 && bot > 0 ? box + '박스 ' + bot + '병' : box > 0 ? box + '박스' : bot + '병';
+      allLogs.push({
+        date: getProp(p, '일자', 'date') || '',
+        type: getProp(p, '종류', 'select'),
+        direction: '출고',
+        amount: amt,
+        note: getProp(p, '수령자_및_비고', 'rich_text') || ''
+      });
+    }
+    allLogs.sort((a, b) => b.date.localeCompare(a.date));
+    const recent = allLogs.slice(0, 8);
+
+    if (recent.length === 0) {
+      document.getElementById('recent-list').innerHTML = '<div class="empty-state">아직 기록이 없습니다.</div>';
+    } else {
+      document.getElementById('recent-list').innerHTML = recent.map(r => `
+        <div class="log-item">
+          <span class="log-date">${r.date}</span>
+          <span class="type-badge ${r.type === '화이트' ? 'type-white' : 'type-red'}">${r.type}</span>
+          <span class="log-desc">${r.direction} <strong>${r.amount}</strong>${r.note ? ' · ' + r.note : ''}</span>
+          <span class="type-badge ${r.direction === '입고' ? 'dir-in' : 'dir-out'}">${r.direction}</span>
+        </div>`).join('');
+    }
+  } catch(e) {
+    toast('데이터 로드 실패: ' + e.message, true);
+    document.getElementById('recent-list').innerHTML = '<div class="empty-state">불러오기 실패.<br>설정을 확인해주세요.</div>';
+    setStatError();
+  }
+}
+
+function setStatLoading() {
+  ['white','red'].forEach(t => {
+    document.getElementById('val-' + t).textContent = '—';
+    document.getElementById('unit-' + t).textContent = '';
+    const b = document.getElementById('badge-' + t);
+    b.textContent = '로딩중'; b.className = 'stat-badge';
+  });
+}
+function setStatError() {
+  ['white','red'].forEach(t => {
+    document.getElementById('val-' + t).textContent = '오류';
+    const b = document.getElementById('badge-' + t);
+    b.textContent = '오류'; b.className = 'stat-badge badge-danger';
+  });
+}
+function renderStat(type, total) {
+  const [main, sub] = toDisplay(total);
+  document.getElementById('val-' + type).textContent = main;
+  document.getElementById('unit-' + type).textContent = sub || '';
+  const b = document.getElementById('badge-' + type);
+  if (total <= 0) {
+    b.textContent = '재고 없음'; b.className = 'stat-badge badge-danger';
+  } else if (total <= 6) {
+    b.textContent = '⚠ 교구청 구매 요망'; b.className = 'stat-badge badge-warn';
+  } else {
+    b.textContent = '✓ 여유'; b.className = 'stat-badge badge-ok';
+  }
+}
+
+// ── 입고 저장 ─────────────────────────────────────────────────
+async function submitInbound() {
+  if (!checkConfig()) return;
+  const date  = document.getElementById('in-date').value;
+  const wBox  = parseInt(document.getElementById('in-white-box').value) || 0;
+  const rBox  = parseInt(document.getElementById('in-red-box').value) || 0;
+  const note  = document.getElementById('in-note').value.trim();
+
+  if (!date) { toast('일자를 입력해주세요.', true); return; }
+  if (wBox === 0 && rBox === 0) { toast('수량을 1박스 이상 입력해주세요.', true); return; }
+
+  const dbId = cfg.inDb || '5b09412b6e914008bdbd24414b967101';
+  const entries = [];
+  if (wBox > 0) entries.push({ type: '화이트', box: wBox });
+  if (rBox > 0) entries.push({ type: '레드', box: rBox });
+
+  toast('저장 중...');
+  try {
+    for (const e of entries) {
+      await notionCreate(dbId, {
+        '내역명': { title: [{ text: { content: date + ' ' + e.type + ' 입고 ' + e.box + '박스' } }] },
+        '일자':   { date: { start: date } },
+        '종류':   { select: { name: e.type } },
+        '구매박스': { number: e.box },
+        '비고':   { rich_text: [{ text: { content: note } }] }
+      });
+    }
+    toast('입고가 저장되었습니다. ✓');
+    clearInbound();
+  } catch(e) {
+    toast('저장 실패: ' + e.message, true);
+  }
+}
+
+function clearInbound() {
+  document.getElementById('in-date').value = today();
+  document.getElementById('in-white-box').value = '';
+  document.getElementById('in-red-box').value = '';
+  document.getElementById('in-note').value = '';
+}
+
+// ── 출고 저장 ─────────────────────────────────────────────────
+async function submitOutbound() {
+  if (!checkConfig()) return;
+  const date     = document.getElementById('out-date').value;
+  const type     = document.getElementById('out-type').value;
+  const box      = parseInt(document.getElementById('out-box').value) || 0;
+  const bottle   = parseInt(document.getElementById('out-bottle').value) || 0;
+  const person   = document.getElementById('out-person').value.trim();
+  const receiver = document.getElementById('out-receiver').value.trim();
+
+  if (!date)   { toast('일자를 입력해주세요.', true); return; }
+  if (box === 0 && bottle === 0) { toast('출고 수량을 입력해주세요.', true); return; }
+  if (!person) { toast('출고자를 입력해주세요.', true); return; }
+
+  const amt = box > 0 && bottle > 0 ? box + '박스 ' + bottle + '병' : box > 0 ? box + '박스' : bottle + '병';
+  const dbId = cfg.outDb || '7fda617ff79942b98a74a50e85aaa566';
+
+  toast('저장 중...');
+  try {
+    await notionCreate(dbId, {
+      '내역명':      { title: [{ text: { content: date + ' ' + type + ' 출고 ' + amt } }] },
+      '일자':        { date: { start: date } },
+      '종류':        { select: { name: type } },
+      '출고박스':    { number: box },
+      '출고낱병':    { number: bottle },
+      '출고자':      { rich_text: [{ text: { content: person } }] },
+      '수령자_및_비고': { rich_text: [{ text: { content: receiver } }] }
+    });
+    toast('출고가 저장되었습니다. ✓');
+    clearOutbound();
+  } catch(e) {
+    toast('저장 실패: ' + e.message, true);
+  }
+}
+
+function clearOutbound() {
+  document.getElementById('out-date').value = today();
+  document.getElementById('out-box').value = '0';
+  document.getElementById('out-bottle').value = '0';
+  document.getElementById('out-person').value = '';
+  document.getElementById('out-receiver').value = '';
+}
+
+// ── 내역 ─────────────────────────────────────────────────────
+let allHistory = [];
+let currentFilter = 'all';
+
+async function loadHistory() {
+  if (!checkConfig()) return;
+  document.getElementById('history-list').innerHTML = '<div class="loading-state"><span class="spinner"></span>불러오는 중...</div>';
+  try {
+    const [inData, outData] = await Promise.all([
+      notionQuery(cfg.inDb  || '5b09412b6e914008bdbd24414b967101'),
+      notionQuery(cfg.outDb || '7fda617ff79942b98a74a50e85aaa566')
+    ]);
+
+    allHistory = [];
+    for (const p of inData.results || []) {
+      allHistory.push({
+        date: getProp(p, '일자', 'date') || '',
+        type: getProp(p, '종류', 'select'),
+        direction: '입고',
+        amount: (getProp(p, '구매박스', 'number') || 0) + '박스',
+        note: getProp(p, '비고', 'rich_text') || ''
+      });
+    }
+    for (const p of outData.results || []) {
+      const box = getProp(p, '출고박스', 'number') || 0;
+      const bot = getProp(p, '출고낱병', 'number') || 0;
+      const amt = box > 0 && bot > 0 ? box + '박스 ' + bot + '병' : box > 0 ? box + '박스' : bot + '병';
+      allHistory.push({
+        date: getProp(p, '일자', 'date') || '',
+        type: getProp(p, '종류', 'select'),
+        direction: '출고',
+        amount: amt,
+        person: getProp(p, '출고자', 'rich_text') || '',
+        note: getProp(p, '수령자_및_비고', 'rich_text') || ''
+      });
+    }
+    allHistory.sort((a, b) => b.date.localeCompare(a.date));
+    renderHistory();
+  } catch(e) {
+    toast('내역 로드 실패: ' + e.message, true);
+    document.getElementById('history-list').innerHTML = '<div class="empty-state">불러오기 실패</div>';
+  }
+}
+
+function filterHistory(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fb-' + f).classList.add('active');
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = allHistory.filter(r => {
+    if (currentFilter === 'in') return r.direction === '입고';
+    if (currentFilter === 'out') return r.direction === '출고';
+    if (currentFilter === 'white') return r.type === '화이트';
+    if (currentFilter === 'red') return r.type === '레드';
+    return true;
+  });
+
+  if (list.length === 0) {
+    document.getElementById('history-list').innerHTML = '<div class="empty-state">내역이 없습니다.</div>';
+    return;
+  }
+
+  document.getElementById('history-list').innerHTML = '<div class="card">' +
+    list.map(r => `
+      <div class="log-item">
+        <span class="log-date">${r.date}</span>
+        <span class="type-badge ${r.type === '화이트' ? 'type-white' : 'type-red'}">${r.type}</span>
+        <span class="log-desc">${r.amount}${r.person ? ' · ' + r.person : ''}${r.note ? ' · ' + r.note : ''}</span>
+        <span class="type-badge ${r.direction === '입고' ? 'dir-in' : 'dir-out'}">${r.direction}</span>
+      </div>`).join('') +
+  '</div>';
+}
+
+// ── 초기재고 저장 ─────────────────────────────────────────────
+async function saveInitStock() {
+  if (!checkConfig()) return;
+  const wBox = parseInt(document.getElementById('set-white-box').value) || 0;
+  const wBot = parseInt(document.getElementById('set-white-bottle').value) || 0;
+  const rBox = parseInt(document.getElementById('set-red-box').value) || 0;
+  const rBot = parseInt(document.getElementById('set-red-bottle').value) || 0;
+
+  const dbId = cfg.initDb || 'a3c24f5eb9af4c5b97761d5b8bacf013';
+  toast('저장 중...');
+  try {
+    // 기존 페이지 조회 후 업데이트 or 생성
+    const existing = await notionQuery(dbId);
+    let whiteId = null, redId = null;
+    for (const p of existing.results || []) {
+      const t = getProp(p, '종류', 'title');
+      if (t === '화이트') whiteId = p.id;
+      if (t === '레드')   redId   = p.id;
+    }
+
+    const makeProps = (type, box, bot) => ({
+      '종류': { title: [{ text: { content: type } }] },
+      '박스': { number: box },
+      '병':   { number: bot }
+    });
+
+    if (whiteId) await notionUpdate(whiteId, { '박스': { number: wBox }, '병': { number: wBot } });
+    else await notionCreate(dbId, makeProps('화이트', wBox, wBot));
+
+    if (redId) await notionUpdate(redId, { '박스': { number: rBox }, '병': { number: rBot } });
+    else await notionCreate(dbId, makeProps('레드', rBox, rBot));
+
+    toast('초기 재고가 저장되었습니다. ✓');
+  } catch(e) {
+    toast('저장 실패: ' + e.message, true);
+  }
+}
+
+// ── 초기화 ────────────────────────────────────────────────────
+loadConfig();
+document.getElementById('in-date').value = today();
+document.getElementById('out-date').value = today();
+
+// 설정에 기본 DB ID 세팅
+if (!cfg.inDb) {
+  cfg.inDb   = '5b09412b6e914008bdbd24414b967101';
+  cfg.outDb  = '7fda617ff79942b98a74a50e85aaa566';
+  cfg.initDb = 'a3c24f5eb9af4c5b97761d5b8bacf013';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
