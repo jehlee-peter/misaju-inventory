@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="미사주재고">
+  <meta name="theme-color" content="#1e40af">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>미사주 재고 관리</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --blue-dark: #1e40af;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --red-dark: #991b1b;
+      --green: #16a34a;
+      --orange: #ea580c;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --tab-h: 64px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--blue-dark);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(var(--safe-top) + 12px) 16px 12px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .header-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .header-btn:active { background: rgba(255,255,255,0.25); }
+
+    /* ── SCROLL AREA ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 14px calc(var(--tab-h) + var(--safe-bot) + 16px);
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--tab-h) + var(--safe-bot));
+      padding-bottom: var(--safe-bot);
+      background: #fff;
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    }
+    .tab-btn {
+      flex: 1;
+      border: none;
+      background: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 6px 0;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab-btn .icon { font-size: 22px; line-height: 1; }
+    .tab-btn.active { color: var(--blue-dark); }
+    .tab-btn.active .icon { transform: scale(1.1); }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+
+    /* ── STOCK CARDS ── */
+    .stock-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stock-card {
+      border-radius: 18px;
+      padding: 16px 14px;
+      border: 2px solid transparent;
+    }
+    .stock-card.white { background: var(--blue-light); border-color: var(--blue); }
+    .stock-card.red   { background: var(--red-light);  border-color: var(--red); }
+    .stock-card.warn  { border-color: var(--orange) !important; }
+    .stock-card.crit  { border-color: var(--red) !important; animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.3); }
+      50%       { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+    }
+    .sc-type { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .stock-card.white .sc-type { color: var(--blue); }
+    .stock-card.red   .sc-type { color: var(--red); }
+    .sc-value { font-size: 21px; font-weight: 900; line-height: 1.15; color: var(--text); }
+    .sc-value small { font-size: 14px; font-weight: 600; color: var(--muted); }
+    .sc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 8px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-ok   { background: #dcfce7; color: var(--green); }
+    .badge-warn { background: #ffedd5; color: var(--orange); }
+    .badge-crit { background: #fee2e2; color: var(--red); }
+
+    /* ── ALERTS ── */
+    .alert {
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .alert.warn { background: #fff7ed; border: 1.5px solid #fb923c; color: #c2410c; }
+    .alert.crit { background: #fef2f2; border: 1.5px solid #f87171; color: #b91c1c; }
+
+    /* ── HISTORY ITEMS ── */
+    .hist-item {
+      display: flex;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-icon {
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+      margin-right: 11px;
+    }
+    .hi-in-w  { background: #dbeafe; }
+    .hi-in-r  { background: #fee2e2; }
+    .hi-out-w { background: #e0e7ff; }
+    .hi-out-r { background: #fce7f3; }
+    .hist-body { flex: 1; min-width: 0; }
+    .hist-title {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .hist-sub { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-right { text-align: right; flex-shrink: 0; }
+    .hist-amt { font-size: 15px; font-weight: 800; }
+    .hist-date { font-size: 11px; color: var(--muted); }
+    .amt-in  { color: var(--green); }
+    .amt-out { color: var(--red); }
+    .del-btn {
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 6px;
+      line-height: 1;
+    }
+    .del-btn:active { color: var(--red); }
+
+    /* ── FORM ELEMENTS ── */
+    .page-head { margin-bottom: 16px; }
+    .page-title { font-size: 22px; font-weight: 900; }
+    .page-sub { font-size: 14px; color: var(--muted); margin-top: 2px; }
+
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .req { color: var(--red); }
+
+    .f-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 13px;
+      font-size: 16px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .f-input:focus { border-color: var(--blue); }
+
+    /* Remove number spinners */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    .unit-wrap { position: relative; }
+    .unit-wrap .f-input { padding-right: 44px; }
+    .unit-tag {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* Type buttons */
+    .type-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .type-btn {
+      padding: 14px;
+      border: 2px solid var(--border);
+      border-radius: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .type-btn.sel-w { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+    .type-btn.sel-r { border-color: var(--red);  background: var(--red-light);  color: var(--red); }
+
+    /* Wine section in in-form */
+    .wine-sec {
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      border: 1.5px solid var(--border);
+      background: #f8fafc;
+    }
+    .wine-sec.ws-w { border-color: #93c5fd; background: #f0f7ff; }
+    .wine-sec.ws-r { border-color: #fca5a5; background: #fff5f5; }
+    .ws-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .ws-title { font-size: 15px; font-weight: 800; }
+    .ws-w .ws-title { color: var(--blue); }
+    .ws-r .ws-title { color: var(--red); }
+
+    /* Toggle switch */
+    .toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .tog-track {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #cbd5e1;
+      border-radius: 26px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .tog-track::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle input:checked ~ .tog-track { background: var(--blue-dark); }
+    .toggle input:checked ~ .tog-track::before { transform: translateX(20px); }
+    .ws-body.off { opacity: 0.35; pointer-events: none; }
+
+    /* Submit button */
+    .btn-main {
+      width: 100%;
+      padding: 16px;
+      background: var(--blue-dark);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+    }
+    .btn-main:active { background: #1e3a8a; transform: scale(0.99); }
+    .btn-sec {
+      width: 100%;
+      padding: 13px;
+      border: 1.5px solid var(--border);
+      background: #f8fafc;
+      color: var(--text);
+      border-radius: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .btn-sec:active { background: #e2e8f0; }
+    .btn-danger {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: var(--red);
+    }
+
+    /* Filter pills */
+    .filters {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-bottom: 10px;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filters::-webkit-scrollbar { display: none; }
+    .pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--muted);
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+    }
+    .pill.on { background: var(--blue-dark); border-color: var(--blue-dark); color: #fff; }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--muted);
+    }
+    .empty .ei { font-size: 42px; margin-bottom: 10px; }
+    .empty p { font-size: 15px; }
+
+    /* Stats grid */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-box { background: #f8fafc; border-radius: 12px; padding: 10px 12px; text-align: center; }
+    .stat-lbl { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .stat-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+
+    /* Section divider */
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--tab-h) + var(--safe-bot) + 14px);
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #1e293b;
+      color: #fff;
+      padding: 11px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 90vw;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.ok  { background: var(--green); }
+    .toast.err { background: var(--red); }
+
+    /* Settings */
+    .set-section { margin-bottom: 24px; }
+    .set-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .set-group { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+    .set-group.blue { color: var(--blue); }
+    .set-group.red  { color: var(--red); }
+
+    /* View-all link */
+    .view-all { font-size: 13px; font-weight: 600; color: var(--blue-dark); cursor: pointer; }
+
+    /* Spin animation */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinning { animation: spin 0.5s linear; }
+
+    /* Stock preview badge in out-form */
+    .preview-box {
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .preview-box span { font-weight: 700; color: var(--text); }
+    .preview-box .low { color: var(--orange); }
+    .preview-box .crit { color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <span class="header-title">🍷 미사주 재고</span>
+  <button class="header-btn" id="refreshBtn" onclick="doRefresh()" title="새로고침">↺</button>
+</header>
+
+<!-- ── CONTENT ── -->
+<main class="content" id="content"></main>
+
+<!-- ── TAB BAR ── -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="dash"     onclick="go('dash')"><span class="icon">📊</span>대시보드</button>
+  <button class="tab-btn"        data-tab="in"       onclick="go('in')"><span class="icon">📥</span>입고</button>
+  <button class="tab-btn"        data-tab="out"      onclick="go('out')"><span class="icon">📤</span>출고</button>
+  <button class="tab-btn"        data-tab="history"  onclick="go('history')"><span class="icon">📋</span>내역</button>
+  <button class="tab-btn"        data-tab="settings" onclick="go('settings')"><span class="icon">⚙️</span>설정</button>
+</nav>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE & STORAGE
+// ══════════════════════════════════════════
+
+const SK = { stock: 'mj_stock', txns: 'mj_txns' };
+
+const S = {
+  tab: 'dash',
+  stock: { white: 0, red: 0 },   // in bottles
+  txns: [],                        // sorted newest-first
+  hFilter: { type: 'all', wine: 'all' }
+};
+
+let outType = 'white';  // selected wine type on out-form
+
+function load() {
+  try {
+    const s = localStorage.getItem(SK.stock);
+    if (s) S.stock = JSON.parse(s);
+    const t = localStorage.getItem(SK.txns);
+    if (t) S.txns = JSON.parse(t);
+  } catch(e) { console.warn(e); }
+}
+
+function saveStock() {
+  localStorage.setItem(SK.stock, JSON.stringify(S.stock));
+}
+
+function addTxn(tx) {
+  tx.id = Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  tx.ts = new Date().toISOString();
+  S.txns.unshift(tx);
+  localStorage.setItem(SK.txns, JSON.stringify(S.txns));
+}
+
+function removeTxn(id) {
+  S.txns = S.txns.filter(t => t.id !== id);
+  localStorage.setItem(SK.txns, JSON.stringify(S.txns));
+}
+
+// ══════════════════════════════════════════
+//  CALCULATIONS
+// ══════════════════════════════════════════
+
+function stock(wine) {
+  const init = S.stock[wine] || 0;
+  const inB  = S.txns.filter(t => t.type==='in'  && t.wine===wine).reduce((a,t)=>a+t.total,0);
+  const outB = S.txns.filter(t => t.type==='out' && t.wine===wine).reduce((a,t)=>a+t.total,0);
+  return Math.max(0, init + inB - outB);
+}
+
+function fmt(n) {
+  if (n <= 0) return '0병';
+  const box = Math.floor(n / 6), bot = n % 6;
+  if (!box) return `${bot}병`;
+  if (!bot)  return `${box}박스`;
+  return `${box}박스 ${bot}병`;
+}
+
+function statusOf(n) {
+  if (n === 0) return { key: 'crit', badge: 'badge-crit', icon: '🚨', text: '재고 없음' };
+  if (n <= 6)  return { key: 'warn', badge: 'badge-warn', icon: '⚠️', text: '구매 필요' };
+  return           { key: 'ok',   badge: 'badge-ok',   icon: '✅', text: '여유' };
+}
+
+function bb2n(b, bt) { return (parseInt(b)||0)*6 + (parseInt(bt)||0); }
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function fmtDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getMonth()+1}/${dt.getDate()}`;
+}
+function fmtDateFull(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════════════
+//  ROUTING
+// ══════════════════════════════════════════
+
+function go(tab) {
+  S.tab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+  document.getElementById('content').scrollTop = 0;
+}
+
+function render() {
+  const el = document.getElementById('content');
+  switch(S.tab) {
+    case 'dash':     el.innerHTML = renderDash();     break;
+    case 'in':       el.innerHTML = renderIn();       break;
+    case 'out':      el.innerHTML = renderOut();      break;
+    case 'history':  el.innerHTML = renderHist();     break;
+    case 'settings': el.innerHTML = renderSettings(); break;
+  }
+}
+
+function doRefresh() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  load(); render();
+  setTimeout(() => btn.classList.remove('spinning'), 500);
+  toast('새로고침 완료');
+}
+
+// ══════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════
+
+function renderDash() {
+  const wn = stock('white'), rn = stock('red');
+  const ws = statusOf(wn),   rs = statusOf(rn);
+
+  let alerts = '';
+  if (wn === 0) alerts += `<div class="alert crit">🚨 화이트 재고가 없습니다!</div>`;
+  else if (wn <= 6) alerts += `<div class="alert warn">⚠️ 화이트 미사주 구매가 필요합니다 (${fmt(wn)} 남음)</div>`;
+  if (rn === 0) alerts += `<div class="alert crit">🚨 레드 재고가 없습니다!</div>`;
+  else if (rn <= 6) alerts += `<div class="alert warn">⚠️ 레드 미사주 구매가 필요합니다 (${fmt(rn)} 남음)</div>`;
+
+  const recent = S.txns.slice(0, 8);
+  const recentHtml = recent.length
+    ? recent.map(histItem).join('')
+    : `<div class="empty"><div class="ei">📋</div><p>입출고 내역이 없습니다</p></div>`;
+
+  const tiw = S.txns.filter(t=>t.type==='in'  && t.wine==='white').reduce((a,t)=>a+t.total,0);
+  const tir = S.txns.filter(t=>t.type==='in'  && t.wine==='red').reduce((a,t)=>a+t.total,0);
+  const tow = S.txns.filter(t=>t.type==='out' && t.wine==='white').reduce((a,t)=>a+t.total,0);
+  const tor = S.txns.filter(t=>t.type==='out' && t.wine==='red').reduce((a,t)=>a+t.total,0);
+
+  return `
+    <div class="page-head">
+      <div class="page-title">현재 재고 현황</div>
+      <div class="page-sub">${new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'})} 기준</div>
+    </div>
+
+    ${alerts}
+
+    <div class="stock-row">
+      <div class="stock-card white ${ws.key !== 'ok' ? ws.key : ''}">
+        <div class="sc-type">🤍 화이트</div>
+        <div class="sc-value">${formatBig(wn)}</div>
+        <div class="sc-badge ${ws.badge}">${ws.icon} ${ws.text}</div>
+      </div>
+      <div class="stock-card red ${rs.key !== 'ok' ? rs.key : ''}">
+        <div class="sc-type">❤️ 레드</div>
+        <div class="sc-value">${formatBig(rn)}</div>
+        <div class="sc-badge ${rs.badge}">${rs.icon} ${rs.text}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">누적 통계</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px">🤍 화이트</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-lbl">총 입고</div><div class="stat-val" style="color:var(--green)">+${fmt(tiw)}</div></div>
+            <div class="stat-box"><div class="stat-lbl">총 출고</div><div class="stat-val" style="color:var(--red)">-${fmt(tow)}</div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">❤️ 레드</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-lbl">총 입고</div><div class="stat-val" style="color:var(--green)">+${fmt(tir)}</div></div>
+            <div class="stat-box"><div class="stat-lbl">총 출고</div><div class="stat-val" style="color:var(--red)">-${fmt(tor)}</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:15px;font-weight:800">최근 입출고</span>
+        <span class="view-all" onclick="go('history')">전체보기 →</span>
+      </div>
+      ${recentHtml}
+    </div>
+  `;
+}
+
+function formatBig(n) {
+  if (n === 0) return '<small>재고 없음</small>';
+  const box = Math.floor(n/6), bot = n%6;
+  if (!box) return `${bot}<small>병</small>`;
+  if (!bot) return `${box}<small>박스</small>`;
+  return `${box}<small>박스</small> ${bot}<small>병</small>`;
+}
+
+// ══════════════════════════════════════════
+//  IN FORM
+// ══════════════════════════════════════════
+
+function renderIn() {
+  return `
+    <div class="page-head">
+      <div class="page-title">📥 입고 등록</div>
+      <div class="page-sub">교구청 구매 시 입력하세요</div>
+    </div>
+    <div class="card">
+      <form onsubmit="submitIn(event)">
+        <div class="field">
+          <label class="field-label">구매 일자 <span class="req">*</span></label>
+          <input type="date" class="f-input" id="inDate" value="${today()}" required>
+        </div>
+
+        <!-- White section -->
+        <div class="wine-sec ws-w" id="wsSec">
+          <div class="ws-head">
+            <span class="ws-title">🤍 화이트 미사주</span>
+            <label class="toggle">
+              <input type="checkbox" id="wsOn" checked onchange="togWs('ws')">
+              <span class="tog-track"></span>
+            </label>
+          </div>
+          <div class="ws-body" id="wsBody">
+            <div class="field-label" style="font-size:13px;margin-bottom:6px">구매 수량</div>
+            <div class="two-col" style="margin-bottom:8px">
+              <div class="unit-wrap"><input type="number" class="f-input" id="inWBox" placeholder="0" min="0"><span class="unit-tag">박스</span></div>
+              <div class="unit-wrap"><input type="number" class="f-input" id="inWBot" placeholder="0" min="0" max="5"><span class="unit-tag">병</span></div>
+            </div>
+            <input type="text" class="f-input" id="inWNote" placeholder="비고 (선택사항)">
+          </div>
+        </div>
+
+        <!-- Red section -->
+        <div class="wine-sec ws-r" id="rsSec">
+          <div class="ws-head">
+            <span class="ws-title">❤️ 레드 미사주</span>
+            <label class="toggle">
+              <input type="checkbox" id="rsOn" checked onchange="togWs('rs')">
+              <span class="tog-track"></span>
+            </label>
+          </div>
+          <div class="ws-body" id="rsBody">
+            <div class="field-label" style="font-size:13px;margin-bottom:6px">구매 수량</div>
+            <div class="two-col" style="margin-bottom:8px">
+              <div class="unit-wrap"><input type="number" class="f-input" id="inRBox" placeholder="0" min="0"><span class="unit-tag">박스</span></div>
+              <div class="unit-wrap"><input type="number" class="f-input" id="inRBot" placeholder="0" min="0" max="5"><span class="unit-tag">병</span></div>
+            </div>
+            <input type="text" class="f-input" id="inRNote" placeholder="비고 (선택사항)">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-main">💾 입고 저장</button>
+      </form>
+    </div>
+  `;
+}
+
+function togWs(prefix) {
+  const chk  = document.getElementById(prefix + 'On');
+  const body = document.getElementById(prefix + 'Body');
+  body.classList.toggle('off', !chk.checked);
+}
+
+function submitIn(e) {
+  e.preventDefault();
+  const date  = document.getElementById('inDate').value;
+  const wOn   = document.getElementById('wsOn').checked;
+  const rOn   = document.getElementById('rsOn').checked;
+  let saved   = 0;
+
+  if (wOn) {
+    const total = bb2n(document.getElementById('inWBox').value, document.getElementById('inWBot').value);
+    if (total > 0) {
+      addTxn({ type:'in', wine:'white', date, total,
+        boxes: parseInt(document.getElementById('inWBox').value)||0,
+        bottles: parseInt(document.getElementById('inWBot').value)||0,
+        note: document.getElementById('inWNote').value });
+      saved++;
+    }
+  }
+  if (rOn) {
+    const total = bb2n(document.getElementById('inRBox').value, document.getElementById('inRBot').value);
+    if (total > 0) {
+      addTxn({ type:'in', wine:'red', date, total,
+        boxes: parseInt(document.getElementById('inRBox').value)||0,
+        bottles: parseInt(document.getElementById('inRBot').value)||0,
+        note: document.getElementById('inRNote').value });
+      saved++;
+    }
+  }
+
+  if (saved === 0) { toast('입고 수량을 입력해주세요', 'err'); return; }
+  toast(`✅ 입고 ${saved}건 저장 완료`, 'ok');
+  go('dash');
+}
+
+// ══════════════════════════════════════════
+//  OUT FORM
+// ══════════════════════════════════════════
+
+function renderOut() {
+  const wn = stock('white'), rn = stock('red');
+  const cur = outType === 'white' ? wn : rn;
+  const prevHtml = `현재 재고: <span class="${cur<=6?'low':''} ${cur===0?'crit':''}">${fmt(cur)}</span>`;
+
+  return `
+    <div class="page-head">
+      <div class="page-title">📤 출고 등록</div>
+      <div class="page-sub">불출 시 입력하세요</div>
+    </div>
+    <div class="card">
+      <form onsubmit="submitOut(event)">
+        <div class="field">
+          <label class="field-label">출고 일자 <span class="req">*</span></label>
+          <input type="date" class="f-input" id="outDate" value="${today()}" required>
+        </div>
+
+        <div class="field">
+          <label class="field-label">종류 <span class="req">*</span></label>
+          <div class="type-row">
+            <button type="button" class="type-btn ${outType==='white'?'sel-w':''}" id="btnW" onclick="selOut('white')">🤍 화이트</button>
+            <button type="button" class="type-btn ${outType==='red'?'sel-r':''}"   id="btnR" onclick="selOut('red')">❤️ 레드</button>
+          </div>
+          <div class="preview-box" id="stockPreview">${prevHtml}</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">출고 수량</label>
+          <div class="two-col">
+            <div class="unit-wrap"><input type="number" class="f-input" id="outBox" placeholder="0" min="0" oninput="updatePreview()"><span class="unit-tag">박스</span></div>
+            <div class="unit-wrap"><input type="number" class="f-input" id="outBot" placeholder="0" min="0" max="5" oninput="updatePreview()"><span class="unit-tag">병</span></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">출고자 <span class="req">*</span></label>
+          <input type="text" class="f-input" id="outPerson" placeholder="예: 사무장, 관리장, 사무원" required>
+        </div>
+
+        <div class="field">
+          <label class="field-label">수령자 및 비고</label>
+          <input type="text" class="f-input" id="outNote" placeholder="예: 신부님, 제대회, 주일미사">
+        </div>
+
+        <button type="submit" class="btn-main">💾 출고 저장</button>
+      </form>
+    </div>
+  `;
+}
+
+function selOut(type) {
+  outType = type;
+  document.getElementById('btnW').className = 'type-btn' + (type==='white' ? ' sel-w' : '');
+  document.getElementById('btnR').className = 'type-btn' + (type==='red'   ? ' sel-r' : '');
+  updatePreview();
+}
+
+function updatePreview() {
+  const el = document.getElementById('stockPreview');
+  if (!el) return;
+  const cur = stock(outType);
+  const taking = bb2n(document.getElementById('outBox')?.value, document.getElementById('outBot')?.value);
+  const after = cur - taking;
+
+  let html = `현재 재고: <span class="${cur<=6?'low':''}">${fmt(cur)}</span>`;
+  if (taking > 0) {
+    html += ` → 출고 후: <span class="${after<=0?'crit':after<=6?'low':''}">${after<=0?'부족!':fmt(after)}</span>`;
+  }
+  el.innerHTML = html;
+}
+
+function submitOut(e) {
+  e.preventDefault();
+  const date   = document.getElementById('outDate').value;
+  const boxes  = parseInt(document.getElementById('outBox').value) || 0;
+  const bots   = parseInt(document.getElementById('outBot').value) || 0;
+  const total  = boxes*6 + bots;
+  const person = document.getElementById('outPerson').value.trim();
+  const note   = document.getElementById('outNote').value.trim();
+  const cur    = stock(outType);
+
+  if (!total)  { toast('출고 수량을 입력해주세요', 'err'); return; }
+  if (!person) { toast('출고자를 입력해주세요', 'err'); return; }
+  if (total > cur) {
+    toast(`현재 재고(${fmt(cur)})보다 많습니다`, 'err'); return;
+  }
+
+  addTxn({ type:'out', wine: outType, date, total, boxes, bottles: bots, person, note });
+  toast(`✅ 출고 완료 (${outType==='white'?'화이트':'레드'} ${fmt(total)})`, 'ok');
+  go('dash');
+}
+
+// ══════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════
+
+function renderHist() {
+  const { type, wine } = S.hFilter;
+  let list = S.txns;
+  if (type !== 'all') list = list.filter(t => t.type === type);
+  if (wine !== 'all') list = list.filter(t => t.wine === wine);
+
+  const items = list.length
+    ? list.map(t => `<div style="position:relative">${histItem(t)}<button class="del-btn" onclick="delTxn('${t.id}')">✕</button></div>`).join('')
+    : `<div class="empty"><div class="ei">📋</div><p>해당 내역이 없습니다</p></div>`;
+
+  return `
+    <div class="page-head">
+      <div class="page-title">📋 입출고 내역</div>
+      <div class="page-sub">총 ${list.length}건</div>
+    </div>
+
+    <div class="filters">
+      <button class="pill ${type==='all'?'on':''}" onclick="setFilt('type','all')">전체</button>
+      <button class="pill ${type==='in'?'on':''}"  onclick="setFilt('type','in')">📥 입고</button>
+      <button class="pill ${type==='out'?'on':''}" onclick="setFilt('type','out')">📤 출고</button>
+    </div>
+    <div class="filters">
+      <button class="pill ${wine==='all'?'on':''}"   onclick="setFilt('wine','all')">전체</button>
+      <button class="pill ${wine==='white'?'on':''}" onclick="setFilt('wine','white')">🤍 화이트</button>
+      <button class="pill ${wine==='red'?'on':''}"   onclick="setFilt('wine','red')">❤️ 레드</button>
+    </div>
+
+    <div class="card">${items}</div>
+  `;
+}
+
+function histItem(t) {
+  const isIn  = t.type === 'in';
+  const isW   = t.wine === 'white';
+  const ico   = isIn ? (isW ? 'hi-in-w' : 'hi-in-r') : (isW ? 'hi-out-w' : 'hi-out-r');
+  const emoji = isW ? '🤍' : '❤️';
+  const title = `${isW?'화이트':'레드'} ${isIn?'입고':'출고'}`;
+  const sub   = isIn
+    ? (t.note || fmtDateFull(t.date))
+    : `${fmtDateFull(t.date)}${t.person ? ' · '+t.person : ''}${t.note ? ' · '+t.note : ''}`;
+  const amtCls = isIn ? 'amt-in' : 'amt-out';
+  const prefix = isIn ? '+' : '−';
+
+  return `
+    <div class="hist-item">
+      <div class="hist-icon ${ico}">${emoji}</div>
+      <div class="hist-body">
+        <div class="hist-title">${title}</div>
+        <div class="hist-sub">${sub}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-amt ${amtCls}">${prefix}${fmt(t.total)}</div>
+        <div class="hist-date">${fmtDate(t.date)}</div>
+      </div>
+    </div>`;
+}
+
+function setFilt(key, val) {
+  S.hFilter[key] = val;
+  render();
+}
+
+function delTxn(id) {
+  if (confirm('이 내역을 삭제하시겠습니까?')) {
+    removeTxn(id);
+    toast('삭제되었습니다', 'ok');
+    render();
+  }
+}
+
+// ══════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════
+
+function renderSettings() {
+  const w = S.stock.white || 0, r = S.stock.red || 0;
+  const wb = Math.floor(w/6), wbt = w%6;
+  const rb = Math.floor(r/6), rbt = r%6;
+
+  return `
+    <div class="page-head">
+      <div class="page-title">⚙️ 설정</div>
+      <div class="page-sub">초기 재고 및 데이터 관리</div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-label">초기 재고 설정</div>
+      <div class="card">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5">
+          실물 재고를 직접 세어 현재 보유량을 입력하세요.<br>
+          이 수치를 기준으로 입출고가 계산됩니다.
+        </p>
+        <form onsubmit="saveSettings(event)">
+          <div class="set-group blue">🤍 화이트 초기 재고</div>
+          <div class="two-col field">
+            <div class="unit-wrap"><input type="number" class="f-input" id="sWBox" value="${wb}" min="0"><span class="unit-tag">박스</span></div>
+            <div class="unit-wrap"><input type="number" class="f-input" id="sWBot" value="${wbt}" min="0" max="5"><span class="unit-tag">병</span></div>
+          </div>
+
+          <div class="set-group red">❤️ 레드 초기 재고</div>
+          <div class="two-col field">
+            <div class="unit-wrap"><input type="number" class="f-input" id="sRBox" value="${rb}" min="0"><span class="unit-tag">박스</span></div>
+            <div class="unit-wrap"><input type="number" class="f-input" id="sRBot" value="${rbt}" min="0" max="5"><span class="unit-tag">병</span></div>
+          </div>
+
+          <button type="submit" class="btn-main">💾 초기 재고 저장</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-label">데이터 관리</div>
+      <div class="card">
+        <div style="font-size:14px;margin-bottom:12px">
+          전체 내역 <strong>${S.txns.length}건</strong> 저장됨
+        </div>
+        <button class="btn-sec" onclick="exportData()">📤 데이터 내보내기 (JSON 백업)</button>
+        <button class="btn-sec" onclick="importData()">📂 데이터 가져오기 (JSON 복원)</button>
+        <button class="btn-sec btn-danger" onclick="clearAll()">🗑️ 전체 내역 초기화</button>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-label">앱 정보</div>
+      <div class="card">
+        <p style="font-size:14px;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--text)">미사주 재고 관리 v1.0</strong><br>
+          데이터는 이 기기의 브라우저에 저장됩니다.<br>
+          다른 기기와 동기화하려면 '데이터 내보내기'로 백업하세요.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function saveSettings(e) {
+  e.preventDefault();
+  S.stock = {
+    white: bb2n(document.getElementById('sWBox').value, document.getElementById('sWBot').value),
+    red:   bb2n(document.getElementById('sRBox').value, document.getElementById('sRBot').value)
+  };
+  saveStock();
+  toast('✅ 초기 재고가 저장되었습니다', 'ok');
+}
+
+function exportData() {
+  const data = { exportedAt: new Date().toISOString(), stock: S.stock, txns: S.txns };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `misaju_backup_${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('데이터를 내보냈습니다', 'ok');
+}
+
+function importData() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = ev => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = re => {
+      try {
+        const d = JSON.parse(re.target.result);
+        if (!d.stock || !d.txns) throw new Error();
+        if (!confirm(`${d.txns.length}건의 내역을 가져오시겠습니까?\n기존 데이터가 덮어씌워집니다.`)) return;
+        S.stock = d.stock; S.txns = d.txns;
+        saveStock();
+        localStorage.setItem(SK.txns, JSON.stringify(S.txns));
+        toast('✅ 데이터를 가져왔습니다', 'ok');
+        render();
+      } catch { toast('올바른 백업 파일이 아닙니다', 'err'); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+function clearAll() {
+  if (!confirm('모든 입출고 내역을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  if (!confirm('정말로 삭제하시겠습니까?')) return;
+  S.txns = [];
+  localStorage.setItem(SK.txns, '[]');
+  toast('초기화되었습니다', 'ok');
+  render();
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+
+let _toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type ? ' ' + type : '');
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════
+//  SERVICE WORKER
+// ══════════════════════════════════════════
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .catch(err => console.warn('SW 등록 실패:', err));
+  });
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+
+load();
+render();
+</script>
+</body>
+</html>
